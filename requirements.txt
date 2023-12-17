@@ -1,0 +1,10 @@
+fastapi==0.73.0
+uvicorn==0.17.4
+pydantic[email]
+mongo
+motor==2.5.1
+python-decouple==3.6
+twilio
+python-multipart
+python-dotenv
+aiofiles
