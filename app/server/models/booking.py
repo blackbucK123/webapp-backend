@@ -19,13 +19,22 @@ class PyObjectId(ObjectId):
 
 
 class BookingSchema(BaseModel):
-    id: Optional[PyObjectId] = Field(alias='_id')
+    # id: Optional[PyObjectId] = Field(alias='_id') # was using this for testing
     bookingID: int = Field(...)
+    userID: int = Field(...)
+    bookingDate: str = Field(...)
+    venueID: int = Field(...)
     venueName: str = Field(...)
+    courtID: int = Field(...)
     courtName: str = Field(...)
+    slot: str = Field(...)
+    paymentID: str = Field(...)
+    amount: str = Field(...)
     firstName: str = Field(...)
+    lastName: str = Field(...)
     mobile: str = Field(...)
     tournamentName: str = Field(...)
+    isRedeemed: bool = Field(...)
     
 
     class Config:
@@ -36,7 +45,8 @@ class BookingSchema(BaseModel):
                 "courtName": "Court 1",
                 "firstName": "Shouri",
                 "mobile": "6281353466",
-                "tournamentName": "1v1"
+                "tournamentName": "1v1",
+                "isRedeemed": True
             }
         }
 

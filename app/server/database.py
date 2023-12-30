@@ -1,5 +1,6 @@
 from bson.objectid import ObjectId
 import motor.motor_asyncio
+from pprint import pprint
 
 MONGO_DETAILS = "mongodb+srv://shourisingaraju:5wuLcbN9W3RXxUA@cluster0.5s0wiq8.mongodb.net/"
 
@@ -35,7 +36,10 @@ def booking_helper(booking) -> dict:
         "paymentID": int(booking["paymentID"]),
         "amount": str(booking["amount"]),
         "firstName": str(booking["firstName"]),
-        "tournamentName": str(booking["tournamentName"])
+        "lastName": str(booking['lastName']),
+        "mobile": str(booking["mobile"]),
+        "tournamentName": str(booking["tournamentName"]),
+        "isRedeemed": bool(booking['isRedeemed'])
     }
 
 def payment_helper(payment) -> dict:
@@ -52,6 +56,16 @@ def user_helper(user) -> dict:
         "firstName": str(user["firstName"]),
         "lastName": str(user["lastName"]),
         "mobile": str(user["mobile"]),
+    }
+def coupon_helper(coupon) -> dict:
+    return{
+        "couponID": int(coupon['couponID']),
+        "userID": int(coupon['userID']),
+        "firstName": str(coupon['firstName']),
+        "lastName": str(coupon['lastName']),
+        "couponDate": str(coupon['couponDate']),
+        "isRedeemed": bool(coupon['isRedeemed']),
+        "bookings": coupon['bookings']
     }
 # Retrieve all tournaments present in the database
 async def retrieve_tournaments():
@@ -214,7 +228,28 @@ coupon_pipeline = [
 # Retreive courts data for each venue
 async def retreive_coupons():
     coupons = []
-    coupon = await coupon_collection.aggregate(coupon_pipeline)
-    # async for coupon in coupon_collection.aggregate(coupon_pipeline):
-    #     coupons.append(coupon)
+    # coupon = await coupon_collection.aggregate(coupon_pipeline)
+    async for coupon in coupon_collection.aggregate(coupon_pipeline):
+        coupons.append(coupon)
     return coupon
+
+# Create new coupon if 5 bookings made since last time
+async def add_coupon(coupon_data: dict) -> dict:
+    bookings = []
+    query = {"$and": [{"userID": coupon_data['userID']}, {"isRedeemed": False}]}
+    async for booking in booking_collection.find(query):
+        bookings.append(booking["bookingID"])
+    if len(bookings) >= 5:
+        coupon_data['bookings'] = bookings
+        coupon = await coupon_collection.insert_one(coupon_data)
+        new_coupon = await coupon_collection.find_one({"_id": coupon.inserted_id})
+        for booking in bookings:
+             await booking_collection.update_one({"bookingID": booking}, { "$set": { "isRedeemed": True }})
+        return coupon_helper(new_coupon), "Coupon added!!!"
+    elif len(bookings) < 5:
+        return [], "No coupon for now!!!"
+    
+# Update coupon status if redeemed
+async def redeem_coupon(couponID: int) -> dict:
+    coupon_updated = await coupon_collection.update_one({"couponID": couponID}, {"$set": { "isRedeemed": True }})
+    return coupon_updated
