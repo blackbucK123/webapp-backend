@@ -7,6 +7,8 @@ from app.server.routes.user import router as UserRouter
 from app.server.routes.slot import router as SlotRouter
 from app.server.routes.venue import router as VenueRouter
 from app.server.routes.otp import router as OTPRouter
+from app.server.routes.dashboard import router as DashboardRouter
+from app.server.routes.coupon import router as CouponRouter
 
 app = FastAPI()
 
@@ -17,6 +19,8 @@ app.include_router(UserRouter, tags=['User'], prefix="/users")
 app.include_router(SlotRouter, tags=['Slot'], prefix="/slots")
 app.include_router(VenueRouter, tags=['Venue'], prefix="/venues")
 app.include_router(OTPRouter, tags=['OTP'], prefix="/otp")
+app.include_router(DashboardRouter, tags=['Dashboard'], prefix="/dashboard")
+app.include_router(CouponRouter, tags=['Coupon'], prefix="/coupons")
 
 @app.get("/", tags=["Root"])
 async def read_root():

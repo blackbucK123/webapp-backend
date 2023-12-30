@@ -12,6 +12,7 @@ booking_collection = database.get_collection("booking")
 user_collection = database.get_collection("user")
 location_collection = database.get_collection("location")
 venue_collection = database.get_collection("venue")
+coupon_collection = database.get_collection("coupons")
 
 #helpers
 
@@ -20,9 +21,9 @@ def tournament_helper(tournament) -> dict:
         "tournamentID": int(tournament["tournamentID"]),
         "tournamentName": str(tournament["tournamentName"]),
     }
+
 def booking_helper(booking) -> dict:
     return {
-        "_id": str(booking["_id"]),
         "bookingID": int(booking["bookingID"]),
         "userID": int(booking["userID"]),
         "bookingDate": str(booking["bookingDate"]),
@@ -32,7 +33,9 @@ def booking_helper(booking) -> dict:
         "courtName": str(booking["courtName"]),
         "slot": str(booking["slot"]),
         "paymentID": int(booking["paymentID"]),
-        "amount": str(booking["amount"])
+        "amount": str(booking["amount"]),
+        "firstName": str(booking["firstName"]),
+        "tournamentName": str(booking["tournamentName"])
     }
 
 def payment_helper(payment) -> dict:
@@ -139,3 +142,79 @@ async def retreive_venues():
     async for venue in venue_collection.aggregate(venue_pipeline):
         venues.append(venue)
     return venues
+
+booking_count = [
+     { 
+        "$group" : {
+            "_id": "null",
+            "booking_count": { "$count": { } }
+        }
+    }
+]
+coupon_count = [
+     { 
+        "$group" : {
+            "_id": "null",
+            "coupon_count": { "$count": { } }
+        }
+    }
+]
+user_count = [
+     { 
+        "$group" : {
+            "_id": "null",
+            "user_count": { "$count": { } }
+        }
+    }
+]
+# Retreive dashboard data 
+async def retreive_dashboard_data():
+    booking_num = 0
+    coupon_num = 0
+    user_num = 0
+    async for bookings in booking_collection.aggregate(booking_count):
+        booking_num = int(bookings["booking_count"])
+    async for coupons in coupon_collection.aggregate(coupon_count):
+        coupon_num = int(coupons["coupon_count"])
+    async for users in user_collection.aggregate(user_count):
+        user_num = int(users["user_count"])
+    resp = {
+        "booking_count": booking_num,
+        "user_count": user_num,
+        "coupon_count": coupon_num
+    }
+    return resp
+
+coupon_pipeline = [
+    {
+        "$lookup": {
+            "from": "booking",
+            "let": { "bookingIds": "$bookings" },
+            "pipeline": [
+                {
+                    "$match": {
+                        "$expr": {
+                            "$in": ["$bookingID", "$$bookingIds"]
+                        }
+                    }
+                },
+                {
+                    "$project": {
+                        "bookingID": 1,
+                        "bookingDate": 1, 
+                        "tournamentName": 1  
+                    }
+                }
+            ],
+            "as": "bookingData"
+        }
+    }
+]
+
+# Retreive courts data for each venue
+async def retreive_coupons():
+    coupons = []
+    coupon = await coupon_collection.aggregate(coupon_pipeline)
+    # async for coupon in coupon_collection.aggregate(coupon_pipeline):
+    #     coupons.append(coupon)
+    return coupon

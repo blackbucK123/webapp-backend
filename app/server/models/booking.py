@@ -1,34 +1,42 @@
 from typing import Optional
-
+from bson import ObjectId
 from pydantic import BaseModel, Field
+
+class PyObjectId(ObjectId):
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate
+
+    @classmethod
+    def validate(cls, v):
+        if not ObjectId.is_valid(v):
+            raise ValueError("Invalid ObjectId")
+        return ObjectId(v)
+
+    @classmethod
+    def __modify_schema__(cls, field_schema):
+        field_schema.update(type="string")
 
 
 class BookingSchema(BaseModel):
-    _id: str = Field(...)
+    id: Optional[PyObjectId] = Field(alias='_id')
     bookingID: int = Field(...)
-    userID: int = Field(...)
-    bookingDate: str = Field(...)
-    venueID: int = Field(...)
     venueName: str = Field(...)
-    courtID: int = Field(...)
     courtName: str = Field(...)
-    slot: str = Field(...)
-    paymentID: int = Field(...)
-    amount: str = Field(...)
+    firstName: str = Field(...)
+    mobile: str = Field(...)
+    tournamentName: str = Field(...)
+    
 
     class Config:
         schema_extra = {
             "example": {
                 "bookingID": 10001,
-                "userID": 1,
-                "bookingDate": "11-12-2023",
-                "venueID": 1,
                 "venueName": "Gachibowli Stadium",
-                "courtID": 11,
                 "courtName": "Court 1",
-                "slot": "12:00 PM",
-                "paymentID": 1,
-                "amount": "₹ 350.00"
+                "firstName": "Shouri",
+                "mobile": "6281353466",
+                "tournamentName": "1v1"
             }
         }
 
