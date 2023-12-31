@@ -31,5 +31,5 @@ async def get_booking_data(bookingId):
 @router.post("/", response_description="Booking data added into the database")
 async def add_booking_data(booking: BookingSchema = Body(...)):
     booking = jsonable_encoder(booking)
-    new_booking = await add_booking(booking)
-    return ResponseModel(new_booking, "Booking added successfully.")
+    new_booking, message = await add_booking(booking)
+    return ResponseModel(new_booking, message)

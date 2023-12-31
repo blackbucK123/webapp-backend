@@ -14,6 +14,7 @@ user_collection = database.get_collection("user")
 location_collection = database.get_collection("location")
 venue_collection = database.get_collection("venue")
 coupon_collection = database.get_collection("coupons")
+payment_collection = database.get_collection("payment")
 
 #helpers
 
@@ -76,16 +77,51 @@ async def retrieve_tournaments():
 
 # Create booking in present database
 async def add_booking(booking_data: dict) -> dict:
-    booking = await booking_collection.insert_one(booking_data)
-    new_booking = await booking_collection.find_one({"_id": booking.inserted_id})
-    return booking_helper(new_booking)
+    max_payment_agregate = [{
+        "$group" : {
+            "_id": "null",
+            "max_paymentID" : { "$max": "$paymentID"}
+        }
+    }]
+    max_booking_agregate = [{
+        "$group" : {
+            "_id": "null",
+            "max_bookingID" : { "$max": "$bookingID"}
+        }
+    }]
+    async for payment in payment_collection.aggregate(max_payment_agregate):
+        max_payment_id = int(payment['max_paymentID'])
+       
+    async for booking in booking_collection.aggregate(max_booking_agregate):
+        max_booking_id = int(booking['max_bookingID'])
+
+    payment_obj = {
+        "paymentID": max_payment_id + 1,
+        "bookingID": max_booking_id + 1,
+        "userID": booking_data['userID'],
+        "amount": booking_data['amount'],
+        "paymentDate": booking_data['bookingDate']
+    }
+
+    payment = await payment_collection.insert_one(payment_obj)
+    new_payment = await payment_collection.find_one({"_id": payment.inserted_id})
+
+    if new_payment:
+        booking_data['bookingID'] = max_booking_id + 1
+        booking_data['paymentID'] = max_payment_id + 1
+        booking_data['isRedeemed'] = False
+        booking = await booking_collection.insert_one(booking_data)
+        new_booking = await booking_collection.find_one({"_id": booking.inserted_id})
+        return booking_helper(new_booking), 'Booking confirmed!'
+    else:
+        return [], "Payment confirmation pending!"
 
 # Retreive all bookings in present database
 async def retrieve_bookings():
     bookings = []
     async for booking in booking_collection.find():
         bookings.append(booking_helper(booking))
-    return bookings
+    return bookings, "Booking confirmed!"
 
 # Retrieve a booking with a matching ID
 async def retrieve_booking(bookingId: int) -> dict:
@@ -109,6 +145,16 @@ async def retrieve_users():
 
 # Create user in present database
 async def add_user(user_data: dict) -> dict:
+    max_user_agregate = [{
+        "$group" : {
+            "_id": "null",
+            "max_userID" : { "$max": "$userID"}
+        }
+    }]
+    async for user in user_collection.aggregate(max_user_agregate):
+        max_user_id = int(user['max_userID'])
+    
+    user_data['userID'] = max_user_id + 1
     user = await user_collection.insert_one(user_data)
     new_user = await user_collection.find_one({"_id": user.inserted_id})
     return user_helper(new_user)
@@ -224,7 +270,18 @@ coupon_pipeline = [
         }
     }
 ]
-
+"""
+max_user_agregate = [{
+        "$group" : {
+            "_id": "null",
+            "max_userID" : { "$max": "$userID"}
+        }
+    }]
+    async for user in user_collection.aggregate(max_user_agregate):
+        max_user_id = int(user['max_userID'])
+    
+    user_data['userID'] = max_user_id + 1
+"""
 # Retreive courts data for each venue
 async def retreive_coupons():
     coupons = []
@@ -237,10 +294,24 @@ async def retreive_coupons():
 async def add_coupon(coupon_data: dict) -> dict:
     bookings = []
     query = {"$and": [{"userID": coupon_data['userID']}, {"isRedeemed": False}]}
+
+    max_coupon_agregate = [{
+        "$group" : {
+            "_id": "null",
+            "max_couponID" : { "$max": "$couponID"}
+        }
+    }]
+
+    async for coupon in coupon_collection.aggregate(max_coupon_agregate):
+        max_coupon_id = int(coupon['max_couponID'])
+
     async for booking in booking_collection.find(query):
         bookings.append(booking["bookingID"])
+
+
     if len(bookings) >= 5:
         coupon_data['bookings'] = bookings
+        coupon_data['couponID'] = max_coupon_id + 1
         coupon = await coupon_collection.insert_one(coupon_data)
         new_coupon = await coupon_collection.find_one({"_id": coupon.inserted_id})
         for booking in bookings:
