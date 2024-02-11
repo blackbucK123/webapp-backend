@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.server.routes.tournament import router as TournamentRouter
 from app.server.routes.booking import router as BookingRouter
@@ -11,6 +12,20 @@ from app.server.routes.dashboard import router as DashboardRouter
 from app.server.routes.coupon import router as CouponRouter
 
 app = FastAPI()
+
+origins = [
+    "http://localhost",
+    "http://localhost:4200",
+    "http://localhost:8080",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(TournamentRouter, tags=["Tournament"], prefix="/tournaments")
 app.include_router(BookingRouter, tags=["Booking"], prefix="/bookings")

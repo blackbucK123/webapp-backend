@@ -16,8 +16,7 @@ class PyObjectId(ObjectId):
     @classmethod
     def __modify_schema__(cls, field_schema):
         field_schema.update(type="string")
-
-
+ 
 class BookingSchema(BaseModel):
     # id: Optional[PyObjectId] = Field(alias='_id') # was using this for testing
     bookingID: int = Field(...)
@@ -46,7 +45,7 @@ class BookingSchema(BaseModel):
                 "firstName": "Shouri",
                 "mobile": "6281353466",
                 "tournamentName": "1v1",
-                "isRedeemed": True
+                "isRedeemed": False
             }
         }
 

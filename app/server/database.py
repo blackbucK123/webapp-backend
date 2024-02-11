@@ -124,10 +124,11 @@ async def retrieve_bookings():
     return bookings, "Booking confirmed!"
 
 # Retrieve a booking with a matching ID
-async def retrieve_booking(bookingId: int) -> dict:
-    booking = await booking_collection.find_one({"bookingID": int(bookingId)})
-    if booking:
-        return booking_helper(booking)
+async def retrieve_booking(userID: int):
+    bookings = []
+    async for booking in booking_collection.find({"userID": int(userID)}):
+        bookings.append(booking_helper(booking))
+    return bookings
 
 # Retreive all payments in present database
 async def retreive_payments():
@@ -142,6 +143,12 @@ async def retrieve_users():
     async for user in user_collection.find():
         users.append(user_helper(user))
     return users
+
+# Retrieve a booking with a matching ID
+async def retrieve_user(mobile: str) -> dict:
+    user = await user_collection.find_one({"mobile": str(mobile)})
+    if user:
+        return user_helper(user)
 
 # Create user in present database
 async def add_user(user_data: dict) -> dict:

@@ -21,9 +21,9 @@ async def get_bookings():
         return ResponseModel(bookings, "Bookingss data retrieved successfully")
     return ResponseModel(bookings, "Empty list returned")
 
-@router.get("/{bookingId}", response_description="Booking data retrieved")
-async def get_booking_data(bookingId):
-    booking = await retrieve_booking(bookingId)
+@router.get("/{userID}", response_description="Booking data retrieved")
+async def get_booking_data(userID):
+    booking = await retrieve_booking(userID)
     if booking:
         return ResponseModel(booking, "Booking data retrieved successfully")
     return ErrorResponseModel("An error occurred.", 404, "Booking doesn't exist.")
