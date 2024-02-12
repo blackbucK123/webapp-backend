@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Body
 from fastapi.encoders import jsonable_encoder
+from pprint import pprint
 
 from app.server.database import (
    retrieve_users,
@@ -32,4 +33,7 @@ async def get_user_data(mobile):
 async def add_user_data(user: UserSchema = Body(...)):
     user = jsonable_encoder(user)
     user = await add_user(user)
-    return ResponseModel(user, "User added successfully.")
+    if len(user) > 0:
+        return ResponseModel(user, "User added successfully.")
+    else:
+        return ErrorResponseModel("An error occurred.", 400, "User already exist.")

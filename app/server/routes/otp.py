@@ -7,7 +7,7 @@ import os
 
 
 account_sid = "AC1a05cec6f078472cf93553d3bf45ca31"
-auth_token = "1000e2e0f52999b22d07603ac8bf426c"
+auth_token = "fa9599efbff479b95d8c7a6c0a1ef8c4"
 verify_sid = "VAa3b9281dbf9db5125238d24207d54aa1"
 verified_number = "+919538677729"
 

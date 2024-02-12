@@ -1,6 +1,7 @@
 from bson.objectid import ObjectId
 import motor.motor_asyncio
 from pprint import pprint
+from bson import ObjectId
 
 MONGO_DETAILS = "mongodb+srv://shourisingaraju:5wuLcbN9W3RXxUA@cluster0.5s0wiq8.mongodb.net/"
 
@@ -158,6 +159,10 @@ async def add_user(user_data: dict) -> dict:
             "max_userID" : { "$max": "$userID"}
         }
     }]
+    user = await user_collection.find_one({"mobile": str(user_data['mobile'])})
+    
+    if user is not None:
+        return {}
     async for user in user_collection.aggregate(max_user_agregate):
         max_user_id = int(user['max_userID'])
     
@@ -295,7 +300,52 @@ async def retreive_coupons():
     # coupon = await coupon_collection.aggregate(coupon_pipeline)
     async for coupon in coupon_collection.aggregate(coupon_pipeline):
         coupons.append(coupon)
-    return coupon
+    return coupons
+
+
+# Retrieve a booking with a matching ID
+async def retrieve_user_coupons(userID: int):
+    coupons = []
+    pipeline = [
+        {
+            "$match": {
+                "userID":int(userID)
+            }
+        },
+        {
+            "$lookup": {
+                "from": "booking",
+                "let": { "bookingIds": "$bookings" },
+                "pipeline": [
+                    {
+                        "$match": {
+                            "$expr": {
+                                "$in": ["$bookingID", "$$bookingIds"]
+                            }
+                        }
+                    },
+                    {
+                        "$project": {
+                            "bookingID": 1,
+                            "bookingDate": 1, 
+                            "tournamentName": 1  
+                        }
+                    }
+                ],
+                "as": "bookingData"
+            }
+        }
+    ]
+    async for coupon in coupon_collection.aggregate(pipeline):
+        coupons.append(coupon)
+    if len(coupons) == 0:
+        return []
+    elif len(coupons) < 2:
+        return [coupon]
+    else:
+        pprint(coupons)
+        return coupons
+
 
 # Create new coupon if 5 bookings made since last time
 async def add_coupon(coupon_data: dict) -> dict:
@@ -316,7 +366,7 @@ async def add_coupon(coupon_data: dict) -> dict:
         bookings.append(booking["bookingID"])
 
 
-    if len(bookings) >= 5:
+    if len(bookings) == 5:
         coupon_data['bookings'] = bookings
         coupon_data['couponID'] = max_coupon_id + 1
         coupon = await coupon_collection.insert_one(coupon_data)
@@ -329,5 +379,17 @@ async def add_coupon(coupon_data: dict) -> dict:
     
 # Update coupon status if redeemed
 async def redeem_coupon(couponID: int) -> dict:
-    coupon_updated = await coupon_collection.update_one({"couponID": couponID}, {"$set": { "isRedeemed": True }})
-    return coupon_updated
+    # Perform the update operation
+    update_result = await coupon_collection.update_one(
+        {"couponID": int(couponID)},
+        {"$set": {"isRedeemed": True}}  # Set the isRedeemed field to True
+    )
+    
+    # Check if the update operation was successful
+    if update_result.modified_count > 0:
+        # If the document was updated, query and return the updated document
+        updated_coupon = await coupon_collection.find_one({"couponID": int(couponID)})
+        return coupon_helper(updated_coupon)
+    
+    # If the update operation failed (no documents matched the filter), return None
+    return None
