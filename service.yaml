@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-app-service
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 80
+  selector:
+    app: web-app
+  # Optional: Specify externalIPs if you want to use a specific IP address
+  externalIPs:
+    - 49.47.232.156
