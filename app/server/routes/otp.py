@@ -6,10 +6,10 @@ import config
 import os
 
 
-account_sid = "AC1a05cec6f078472cf93553d3bf45ca31"
-auth_token = "fa9599efbff479b95d8c7a6c0a1ef8c4"
-verify_sid = "VAa3b9281dbf9db5125238d24207d54aa1"
-verified_number = "+919538677729"
+account_sid = "AC64ee21fc7500dfda0b5594e7c9620bf9"
+auth_token = "154ca65c09d605340ee1386275dbb246"
+verify_sid = "VAce69a27f8f40f63df770c0a347d3c8f2"
+verified_number = "+916281353466"
 
 router = APIRouter()
 
