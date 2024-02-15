@@ -17,6 +17,7 @@ origins = [
     "http://localhost",
     "http://localhost:4200",
     "http://localhost:8080",
+    "https://web-app-elegant-zodiac-342810.web.app"
 ]
 
 app.add_middleware(
