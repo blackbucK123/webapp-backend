@@ -55,11 +55,13 @@ def get_twilio_client():
 @router.post("/")
 def send_otp(mobile_number):
     client = get_twilio_client()
+    mobile_number = '+91' + mobile_number
     verification = client.verify.v2.services(verify_sid).verifications.create(to=mobile_number, channel="sms")
     return verification.status
 
 @router.get("/")
 def check_otp(otp_code, mobile_number):
     client = get_twilio_client()
+    mobile_number = '+91' + mobile_number
     verification = client.verify.v2.services(verify_sid).verification_checks.create(to=mobile_number, code=otp_code)
     return verification.status
